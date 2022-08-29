@@ -2,7 +2,7 @@ resource "aws_eks_node_group" "private" {
   cluster_name    = aws_eks_cluster.devops.name
   node_group_name = "private"
   node_role_arn   = aws_iam_role.node-group.arn
-  subnet_ids      = [for s in aws_subnet.private : s.id]
+  subnet_ids      = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.id]
 
   labels          = {
     "type" = "private"
@@ -33,7 +33,7 @@ resource "aws_eks_node_group" "public" {
   cluster_name    = aws_eks_cluster.devops.name
   node_group_name = "public"
   node_role_arn   = aws_iam_role.node-group.arn
-  subnet_ids      = [for s in aws_subnet.public : s.id]
+  subnet_ids      = [for s in data.terraform_remote_state.network.outputs.subnet_public : s.id]
 
   labels          = {
     "type" = "public"
@@ -168,7 +168,7 @@ resource "aws_iam_role" "ebs-csi-controller" {
 resource "aws_security_group" "eks_nodes" {
   name        = "${var.eks_cluster_name}/ClusterSharedNodeSecurityGroup"
   description = "Communication between all nodes in the cluster"
-  vpc_id      = aws_vpc.devops.id
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
   ingress {
     from_port   = 0
