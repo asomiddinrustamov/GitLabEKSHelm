@@ -1,4 +1,4 @@
-esource "kubernetes_namespace" "gitlab" {
+resource "kubernetes_namespace" "gitlab" {
   metadata {
     name = "gitlab"
   }

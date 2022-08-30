@@ -3,8 +3,8 @@ resource "aws_elasticache_cluster" "gitlab" {
   engine               = "redis"
   node_type            = "cache.m4.xlarge"
   num_cache_nodes      = 1
-  parameter_group_name = "default.redis3.2"
-  engine_version       = "3.2.10"
+  parameter_group_name = "default.redis5.0"
+  engine_version       = "5.0.6" #"3.2.10"
   port                 = 6379
   subnet_group_name    = aws_elasticache_subnet_group.gitlab.name
   security_group_ids   = [aws_security_group.redis.id]
@@ -12,13 +12,13 @@ resource "aws_elasticache_cluster" "gitlab" {
 
 resource "aws_elasticache_subnet_group" "gitlab" {
   name       = "gitlab-cache-subnet"
-  subnet_ids = [for s in aws_subnet.private : s.id]
+  subnet_ids = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.id]
 }
 
 resource "aws_security_group" "redis" {
   name        = "ElasticacheRedisSecurityGroup"
   description = "Communication between the redis and eks worker nodegroups"
-  vpc_id      = aws_vpc.devops.id
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
   egress {
     from_port   = 0
@@ -37,7 +37,7 @@ resource "aws_security_group_rule" "redis_inbound" {
   from_port                = 6379
   protocol                 = "tcp"
   security_group_id        = aws_security_group.redis.id
-  source_security_group_id = aws_eks_cluster.devops.vpc_config[0].cluster_security_group_id
+  source_security_group_id = data.terraform_remote_state.eks.outputs.cluster_security_group_id
   to_port                  = 6379
   type                     = "ingress"
 }

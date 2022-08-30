@@ -7,12 +7,12 @@ resource "aws_iam_role" "gitlab-access" {
             {
                 "Effect": "Allow",
                 "Principal": {
-                    "Federated": aws_iam_openid_connect_provider.openid.arn
+                    "Federated": data.terraform_remote_state.eks.outputs.openid_arn
                 },
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                     "StringEquals": {
-                        "${replace(aws_iam_openid_connect_provider.openid.url, "https://", "")}:sub": "system:serviceaccount:gitlab:aws-access"
+                        "${replace(data.terraform_remote_state.eks.outputs.openid_url, "https://", "")}:sub": "system:serviceaccount:gitlab:aws-access"
                     }
                 }
             }

@@ -42,10 +42,6 @@ global:
     port: ${var.rds_port}
     username: gitlab
     database: gitlabhq_production
-    load_balancing:
-      hosts:
-      - ${aws_db_instance.gitlab-replica[0].address}
-      - ${aws_db_instance.gitlab-replica[1].address}
 
   redis:
     password:
@@ -123,7 +119,7 @@ gitlab:
       volumeName: ${kubernetes_persistent_volume_claim.gitaly.metadata.0.name}
     nodeSelector:
       topology.kubernetes.io/zone: ${var.az[0]}
-  task-runner:
+  toolbox:
     backups:
       objectStorage:
         backend: s3
@@ -174,15 +170,15 @@ resource "helm_release" "gitlab" {
   timeout    = 600
 
   chart      = "gitlab/gitlab"
-  version    = "4.11.3" 
+  version    = "6.1.0" #"4.11.3" 
 
   values     = [data.template_file.gitlab-values.rendered]
 
   depends_on = [
-      aws_eks_node_group.private,
-      aws_eks_node_group.public,
+      # data.terraform_remote_state.eks.outputs.node_group_private,
+      # data.terraform_remote_state.eks.outputs.node_group_public,
       aws_db_instance.gitlab-primary,
-      aws_db_instance.gitlab-replica,
+      # aws_db_instance.gitlab-replica,
       aws_elasticache_cluster.gitlab,
       aws_iam_role_policy.gitlab-access,
       kubernetes_namespace.gitlab,

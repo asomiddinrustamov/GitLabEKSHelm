@@ -14,10 +14,10 @@ resource "aws_db_instance" "gitlab-primary" {
 
   # Engine options
   engine                              = "postgres"
-  engine_version                      = "12.5"
+  engine_version                      = "13.3"
 
   # Settings
-  name                                = "gitlabhq_production"
+  db_name                                = "gitlabhq_production"
   identifier                          = "gitlab-primary"
 
   # Credentials Settings
@@ -25,7 +25,7 @@ resource "aws_db_instance" "gitlab-primary" {
   password                            = "p${random_password.db_password.result}"
 
   # DB instance size
-  instance_class                      = "db.m5.xlarge"
+  instance_class                      = "db.m5.large"
 
   # Storage
   storage_type                        = "gp2"
@@ -46,7 +46,7 @@ resource "aws_db_instance" "gitlab-primary" {
   iam_database_authentication_enabled = false 
 
   # Additional configuration
-  parameter_group_name                = "default.postgres12"
+  parameter_group_name                = "default.postgres13"
 
   # Backup
   backup_retention_period             = 14
@@ -70,57 +70,57 @@ resource "aws_db_instance" "gitlab-primary" {
   }
 }
 
-resource "aws_db_instance" "gitlab-replica" {
-  count = 2
+# resource "aws_db_instance" "gitlab-replica" {
+#   count = 2
 
-  # Engine options
-  engine                              = "postgres"
-  engine_version                      = "12.5"
+#   # # Engine options
+#   # engine                              = "postgres"
+#   # engine_version                      = "12.5"
 
-  # Settings
-  name                                = "gitlabhq_production"
-  identifier                          = "gitlab-replica-${count.index}"
+#   # # Settings
+#   # name                                = "gitlabhq_production-dev-${count.index}"
+#   # identifier                          = "gitlab-replica-${count.index}"
 
-  replicate_source_db                 = "gitlab-primary"  
-  skip_final_snapshot                 = true
-  final_snapshot_identifier           = null
+#   replicate_source_db                 = "gitlab-primary"  
+#   skip_final_snapshot                 = true
+#   final_snapshot_identifier           = null
 
-  # DB instance size
-  instance_class                      = "db.m5.xlarge"
+#   # DB instance size
+#   instance_class                      = "db.m5.large"
 
-  # Storage
-  storage_type                        = "gp2"
-  allocated_storage                   = 100
-  max_allocated_storage               = 2000
+#   # Storage
+#   storage_type                        = "gp2"
+#   allocated_storage                   = 100
+#   max_allocated_storage               = 2000
 
-  publicly_accessible                 = false
-  vpc_security_group_ids              = [aws_security_group.sg.id]
-  port                                = var.rds_port
+#   publicly_accessible                 = false
+#   vpc_security_group_ids              = [aws_security_group.sg.id]
+#   port                                = var.rds_port
 
-  # Database authentication
-  iam_database_authentication_enabled = false 
+#   # Database authentication
+#   iam_database_authentication_enabled = false 
 
-  # Additional configuration
-  parameter_group_name                = "default.postgres12"
+#   # Additional configuration
+#   parameter_group_name                = "default.postgres13"
 
-  # Encryption
-  storage_encrypted                   = true
+#   # Encryption
+#   storage_encrypted                   = true
 
-  # Deletion protection
-  deletion_protection                 = false
+#   # Deletion protection
+#   deletion_protection                 = false
 
-  tags = {
-    Environment = "core"
-  }
+#   tags = {
+#     Environment = "core"
+#   }
 
-  depends_on = [
-    aws_db_instance.gitlab-primary
-  ]
-}
+#   depends_on = [
+#     aws_db_instance.gitlab-primary
+#   ]
+# }
 
 resource "aws_db_subnet_group" "sg" {
   name       = "gitlab"
-  subnet_ids = [for s in aws_subnet.private : s.id]
+  subnet_ids = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.id]
 
   tags = {
     Environment = "core"
@@ -131,20 +131,20 @@ resource "aws_db_subnet_group" "sg" {
 resource "aws_security_group" "sg" {
   name        = "gitlab"
   description = "Allow inbound/outbound traffic"
-  vpc_id      = aws_vpc.devops.id
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
   ingress {
     from_port       = var.rds_port
     to_port         = var.rds_port
     protocol        = "tcp"
-    cidr_blocks = [for s in aws_subnet.private : s.cidr_block]
+    cidr_blocks = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.cidr_block]
   }
 
   egress {
     from_port       = 0
     to_port         = 65535
     protocol        = "tcp"
-    cidr_blocks = [for s in aws_subnet.private : s.cidr_block]
+    cidr_blocks = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.cidr_block]
   }
 
   tags = {

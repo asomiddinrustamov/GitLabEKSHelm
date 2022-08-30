@@ -1,15 +1,16 @@
-resource "aws_route53_record" "gitlab" {
- zone_id    = data.aws_route53_zone.public.zone_id
- name       = "gitlab.${var.public_dns_name}"
- type       = "CNAME"
- ttl        = "300"
- records    = [data.kubernetes_service.gitlab-webservice.status.0.load_balancer.0.ingress.0.hostname]
+## A aws_route53_record resource named "gitlab" was already declared at gitlab.tf:207,1-39.
+# resource "aws_route53_record" "gitlab" {
+#  zone_id    = data.aws_route53_zone.public.zone_id
+#  name       = "gitlab.${var.public_dns_name}"
+#  type       = "CNAME"
+#  ttl        = "300"
+#  records    = [data.kubernetes_service.gitlab-webservice.status.0.load_balancer.0.ingress.0.hostname]
 
- depends_on = [
-   helm_release.gitlab,
-   data.kubernetes_service.gitlab-webservice
- ]
-}
+#  depends_on = [
+#    helm_release.gitlab,
+#    data.kubernetes_service.gitlab-webservice
+#  ]
+# }
 
 resource "aws_s3_bucket" "gitlab-registry" {
   bucket = "${data.aws_caller_identity.current.account_id}-${var.region}-gitlab-registry"
