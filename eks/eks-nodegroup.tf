@@ -8,7 +8,7 @@ resource "aws_eks_node_group" "private" {
     "type" = "private"
   }
 
-  instance_types = ["m5.xlarge"]
+  instance_types = ["m5.large"]
 
   scaling_config {
     desired_size = 2
@@ -43,7 +43,7 @@ resource "aws_eks_node_group" "public" {
 
   scaling_config {
     desired_size = 1
-    max_size     = 3
+    max_size     = 2
     min_size     = 1
   }
 
