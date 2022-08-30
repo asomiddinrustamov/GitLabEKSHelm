@@ -3,14 +3,14 @@ provider "aws" {
 }
 
 provider "kubernetes" {
-  host                   = aws_eks_cluster.devops.endpoint
+  host                   = data.terraform_remote_state.eks.outputs.eks-endpoint
 
   cluster_ca_certificate = base64decode(
-    aws_eks_cluster.devops.certificate_authority[0].data
+    data.terraform_remote_state.eks.outputs.kubeconfig-certificate-authority-data
   )
 
   exec {
-    api_version = "client.authentication.k8s.io/v1alpha1"
+    api_version = "client.authentication.k8s.io/v1beta1"
     args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
     command     = "aws"
   }
@@ -18,14 +18,14 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-    host                   = aws_eks_cluster.devops.endpoint
+    host                   = data.terraform_remote_state.eks.outputs.eks-endpoint
 
     cluster_ca_certificate = base64decode(
-        aws_eks_cluster.devops.certificate_authority[0].data
+        data.terraform_remote_state.eks.outputs.kubeconfig-certificate-authority-data
     )
 
     exec {
-        api_version = "client.authentication.k8s.io/v1alpha1"
+        api_version = "client.authentication.k8s.io/v1beta1"
         args        = ["eks", "get-token", "--cluster-name", var.eks_cluster_name]
         command     = "aws"
     }
