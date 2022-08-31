@@ -2,14 +2,14 @@ resource "aws_eks_cluster" "devops" {
   name     = var.eks_cluster_name
   role_arn = aws_iam_role.eks.arn
 
-  version  = "1.23"
+  version = var.kubernetes_version
 
   vpc_config {
     security_group_ids      = [aws_security_group.eks_cluster.id]
     endpoint_private_access = true
     endpoint_public_access  = true
-    public_access_cidrs     = concat([var.authorized_source_ranges], [for n in data.terraform_remote_state.network.outputs.eip_nat : "${n.public_ip}/32"])
-    subnet_ids              = concat([for s in data.terraform_remote_state.network.outputs.subnet_private : s.id], [for s in data.terraform_remote_state.network.outputs.subnet_public : s.id])
+    public_access_cidrs     = flatten([[var.authorized_source_ranges], [var.eip_nat_public_ips]])
+    subnet_ids              = flatten([[var.private_subnets], [var.public_subnets]])
   }
 
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
@@ -75,7 +75,7 @@ resource "aws_iam_role_policy_attachment" "eks-AmazonEKSVPCResourceController" {
 resource "aws_security_group" "eks_cluster" {
   name        = "${var.eks_cluster_name}/ControlPlaneSecurityGroup"
   description = "Communication between the control plane and worker nodegroups"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id      = var.vpc_id
 
   egress {
     from_port   = 0
@@ -85,7 +85,7 @@ resource "aws_security_group" "eks_cluster" {
   }
 
   tags = {
-    Name        = "${var.eks_cluster_name}/ControlPlaneSecurityGroup"
+    Name = "${var.eks_cluster_name}/ControlPlaneSecurityGroup"
   }
 }
 
