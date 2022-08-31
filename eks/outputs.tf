@@ -1,4 +1,4 @@
-output "eks-endpoint" {
+output "eks_endpoint" {
   value = aws_eks_cluster.devops.endpoint
 }
 

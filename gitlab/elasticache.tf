@@ -12,13 +12,13 @@ resource "aws_elasticache_cluster" "gitlab" {
 
 resource "aws_elasticache_subnet_group" "gitlab" {
   name       = "gitlab-cache-subnet"
-  subnet_ids = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.id]
+  subnet_ids = var.private_subnets
 }
 
 resource "aws_security_group" "redis" {
   name        = "ElasticacheRedisSecurityGroup"
   description = "Communication between the redis and eks worker nodegroups"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id      = var.vpc_id
 
   egress {
     from_port   = 0
@@ -28,7 +28,7 @@ resource "aws_security_group" "redis" {
   }
 
   tags = {
-    Name        = "ElasticacheRedisSecurityGroup"
+    Name = "ElasticacheRedisSecurityGroup"
   }
 }
 
@@ -37,7 +37,7 @@ resource "aws_security_group_rule" "redis_inbound" {
   from_port                = 6379
   protocol                 = "tcp"
   security_group_id        = aws_security_group.redis.id
-  source_security_group_id = data.terraform_remote_state.eks.outputs.cluster_security_group_id
+  source_security_group_id = var.cluster_security_group_id
   to_port                  = 6379
   type                     = "ingress"
 }

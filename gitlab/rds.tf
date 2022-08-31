@@ -1,69 +1,69 @@
 resource "random_string" "db_suffix" {
-  length = 4
+  length  = 4
   special = false
-  upper = false
+  upper   = false
 }
 
 resource "random_password" "db_password" {
-  length = 12
+  length  = 12
   special = true
-  upper = true
+  upper   = true
 }
 
 resource "aws_db_instance" "gitlab-primary" {
 
   # Engine options
-  engine                              = "postgres"
-  engine_version                      = "13.3"
+  engine         = "postgres"
+  engine_version = "13.3"
 
   # Settings
-  db_name                                = "gitlabhq_production"
-  identifier                          = "gitlab-primary"
+  db_name    = "gitlabhq_production"
+  identifier = "gitlab-primary"
 
   # Credentials Settings
-  username                            = "gitlab"
-  password                            = "p${random_password.db_password.result}"
+  username = "gitlab"
+  password = "p${random_password.db_password.result}"
 
   # DB instance size
-  instance_class                      = "db.m5.large"
+  instance_class = "db.m5.large"
 
   # Storage
-  storage_type                        = "gp2"
-  allocated_storage                   = 100
-  max_allocated_storage               = 2000
+  storage_type          = "gp2"
+  allocated_storage     = 100
+  max_allocated_storage = 2000
 
   # Availability & durability
-  multi_az                            = true
+  multi_az = true
 
   # Connectivity
-  db_subnet_group_name                = aws_db_subnet_group.sg.id
+  db_subnet_group_name = aws_db_subnet_group.sg.id
 
-  publicly_accessible                 = false
-  vpc_security_group_ids              = [aws_security_group.sg.id]
-  port                                = var.rds_port
+  publicly_accessible    = false
+  vpc_security_group_ids = [aws_security_group.sg.id]
+  port                   = var.rds_port
 
   # Database authentication
-  iam_database_authentication_enabled = false 
+  iam_database_authentication_enabled = false
 
   # Additional configuration
-  parameter_group_name                = "default.postgres13"
+  parameter_group_name = "default.postgres13"
 
   # Backup
-  backup_retention_period             = 14
-  backup_window                       = "03:00-04:00"
-  final_snapshot_identifier           = "gitlab-postgresql-final-snapshot-${random_string.db_suffix.result}" 
-  delete_automated_backups            = true
-  skip_final_snapshot                 = false
+  backup_retention_period   = 14
+  backup_window             = "03:00-04:00"
+  final_snapshot_identifier = "gitlab-postgresql-final-snapshot-${random_string.db_suffix.result}"
+  delete_automated_backups  = true
+  skip_final_snapshot       = false
 
   # Encryption
-  storage_encrypted                   = true
+  storage_encrypted = true
 
   # Maintenance
-  auto_minor_version_upgrade          = true
-  maintenance_window                  = "Sat:00:00-Sat:02:00"
+  auto_minor_version_upgrade = true
+  maintenance_window         = "Sat:00:00-Sat:02:00"
 
   # Deletion protection
-  deletion_protection                 = false
+  deletion_protection = false
 
   tags = {
     Environment = "core"
@@ -120,7 +120,7 @@ resource "aws_db_instance" "gitlab-primary" {
 
 resource "aws_db_subnet_group" "sg" {
   name       = "gitlab"
-  subnet_ids = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.id]
+  subnet_ids = var.private_subnets
 
   tags = {
     Environment = "core"
@@ -131,20 +131,20 @@ resource "aws_db_subnet_group" "sg" {
 resource "aws_security_group" "sg" {
   name        = "gitlab"
   description = "Allow inbound/outbound traffic"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = var.rds_port
-    to_port         = var.rds_port
-    protocol        = "tcp"
-    cidr_blocks = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.cidr_block]
+    from_port   = var.rds_port
+    to_port     = var.rds_port
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidr_block
   }
 
   egress {
-    from_port       = 0
-    to_port         = 65535
-    protocol        = "tcp"
-    cidr_blocks = [for s in data.terraform_remote_state.network.outputs.subnet_private : s.cidr_block]
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidr_block
   }
 
   tags = {

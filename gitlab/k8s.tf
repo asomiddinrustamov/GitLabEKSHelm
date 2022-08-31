@@ -20,19 +20,19 @@ resource "kubernetes_service_account" "gitlab" {
 
 resource "kubernetes_secret" "gitlab-postgres" {
   metadata {
-    name       = "gitlab-postgres"
-    namespace  = "gitlab"
+    name      = "gitlab-postgres"
+    namespace = "gitlab"
   }
 
   data = {
-   psql-password = "p${random_password.db_password.result}"
+    psql-password = "p${random_password.db_password.result}"
   }
 }
 
 resource "kubernetes_secret" "s3-storage-credentials" {
   metadata {
-    name       = "s3-storage-credentials"
-    namespace  = "gitlab"
+    name      = "s3-storage-credentials"
+    namespace = "gitlab"
   }
 
   data = {
@@ -50,8 +50,8 @@ EOF
 
 resource "kubernetes_secret" "s3-registry-storage-credentials" {
   metadata {
-    name       = "s3-registry-storage-credentials"
-    namespace  = "gitlab"
+    name      = "s3-registry-storage-credentials"
+    namespace = "gitlab"
   }
 
   data = {
@@ -69,15 +69,15 @@ EOF
 }
 
 resource "random_password" "shell-secret" {
-  length = 12
+  length  = 12
   special = true
-  upper = true
+  upper   = true
 }
 
 resource "kubernetes_secret" "shell-secret" {
   metadata {
-    name       = "shell-secret"
-    namespace  = "gitlab"
+    name      = "shell-secret"
+    namespace = "gitlab"
   }
 
   data = {
@@ -87,19 +87,19 @@ resource "kubernetes_secret" "shell-secret" {
 
 resource "kubernetes_persistent_volume" "gitaly" {
   metadata {
-    name      = "gitaly-pv"
+    name = "gitaly-pv"
   }
   spec {
     capacity = {
       storage = "200Gi"
     }
-    access_modes = ["ReadWriteOnce"]
+    access_modes       = ["ReadWriteOnce"]
     storage_class_name = "ebs-gp2"
     persistent_volume_source {
-        aws_elastic_block_store {
-            fs_type   = "ext4"
-            volume_id = aws_ebs_volume.gitaly.id
-        }
+      aws_elastic_block_store {
+        fs_type   = "ext4"
+        volume_id = aws_ebs_volume.gitaly.id
+      }
     }
   }
 }
@@ -110,7 +110,7 @@ resource "kubernetes_persistent_volume_claim" "gitaly" {
     namespace = "gitlab"
   }
   spec {
-    access_modes = ["ReadWriteOnce"]
+    access_modes       = ["ReadWriteOnce"]
     storage_class_name = "ebs-gp2"
     resources {
       requests = {
@@ -134,7 +134,7 @@ resource "kubernetes_storage_class" "gitaly" {
 
   allowed_topologies {
     match_label_expressions {
-      key = "failure-domain.beta.kubernetes.io/zone"
+      key    = "failure-domain.beta.kubernetes.io/zone"
       values = var.az
     }
   }

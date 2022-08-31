@@ -162,27 +162,27 @@ EOF
 }
 
 resource "helm_release" "gitlab" {
-  name       = "gitlab"
-  namespace  = "gitlab"
-  timeout    = 600
+  name      = "gitlab"
+  namespace = "gitlab"
+  timeout   = 600
 
-  chart      = "gitlab/gitlab"
-  version    = "6.1.0" #"4.11.3" 
+  chart   = "gitlab/gitlab"
+  version = "6.1.0" #"4.11.3" 
 
-  values     = [data.template_file.gitlab-values.rendered]
+  values = [data.template_file.gitlab-values.rendered]
 
   depends_on = [
-      # data.terraform_remote_state.eks.outputs.node_group_private,
-      # data.terraform_remote_state.eks.outputs.node_group_public,
-      aws_db_instance.gitlab-primary,
-      # aws_db_instance.gitlab-replica,
-      aws_elasticache_cluster.gitlab,
-      aws_iam_role_policy.gitlab-access,
-      kubernetes_namespace.gitlab,
-      kubernetes_secret.gitlab-postgres,
-      kubernetes_secret.s3-storage-credentials,
-      kubernetes_secret.s3-registry-storage-credentials,
-      kubernetes_persistent_volume_claim.gitaly
+    # data.terraform_remote_state.eks.outputs.node_group_private,
+    # data.terraform_remote_state.eks.outputs.node_group_public,
+    aws_db_instance.gitlab-primary,
+    # aws_db_instance.gitlab-replica,
+    aws_elasticache_cluster.gitlab,
+    aws_iam_role_policy.gitlab-access,
+    kubernetes_namespace.gitlab,
+    kubernetes_secret.gitlab-postgres,
+    kubernetes_secret.s3-storage-credentials,
+    kubernetes_secret.s3-registry-storage-credentials,
+    kubernetes_persistent_volume_claim.gitaly
   ]
 }
 
@@ -198,14 +198,14 @@ data "kubernetes_service" "gitlab-webservice" {
 }
 
 resource "aws_route53_record" "gitlab" {
- zone_id    = data.aws_route53_zone.public.zone_id
- name       = "gitlab.${var.public_dns_name}"
- type       = "CNAME"
- ttl        = "300"
- records    = [data.kubernetes_service.gitlab-webservice.status.0.load_balancer.0.ingress.0.hostname]
+  zone_id = data.aws_route53_zone.public.zone_id
+  name    = "gitlab.${var.public_dns_name}"
+  type    = "CNAME"
+  ttl     = "300"
+  records = [data.kubernetes_service.gitlab-webservice.status.0.load_balancer.0.ingress.0.hostname]
 
- depends_on = [
-   helm_release.gitlab,
-   data.kubernetes_service.gitlab-webservice
- ]
+  depends_on = [
+    helm_release.gitlab,
+    data.kubernetes_service.gitlab-webservice
+  ]
 }
