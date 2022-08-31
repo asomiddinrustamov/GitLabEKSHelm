@@ -15,5 +15,5 @@ resource "aws_vpc" "devops" {
 }
 
 resource "aws_default_security_group" "defaul" {
-    vpc_id = aws_vpc.devops.id
+  vpc_id = aws_vpc.devops.id
 }
