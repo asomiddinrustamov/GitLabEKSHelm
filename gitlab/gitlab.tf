@@ -109,9 +109,6 @@ prometheus:
 redis:
   install: false
 
-# https://docs.gitlab.com/ee/ci/runners/#configuring-runners-in-gitlab
-gitlab-runner:
-  install: false
 
 gitlab:
   gitaly:
